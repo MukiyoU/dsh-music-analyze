@@ -102,7 +102,13 @@ function runScript(python, args, timeoutMs) {
     execFile(
       python,
       [SCRIPT, ...args, '--json'],
-      { timeout: timeoutMs, windowsHide: true, maxBuffer: 8 * 1024 * 1024 },
+      {
+        timeout: timeoutMs,
+        windowsHide: true,
+        maxBuffer: 8 * 1024 * 1024,
+        // Windows 上 Python 的 stdout 默认 GBK，这里强制 UTF-8（脚本里也 reconfigure 了一次，双保险）
+        env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1' },
+      },
       (err, stdout, stderr) => {
         if (err && !String(stdout).includes('{')) {
           const tail = String(stderr || err.message || '').trim().slice(-1200)
