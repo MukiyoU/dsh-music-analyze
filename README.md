@@ -1,0 +1,131 @@
+# dsh-music-analyze —— 让模型「看见」音乐
+
+给 DeepSeek Harness 加一个工具：**把音频变成四张图 + 一组数字**，模型看图看数字，就能和你讨论这首曲子。
+
+---
+
+## 它做了什么
+
+一个 `music_analyze` 工具，输入音频/视频路径，输出：
+
+**四联图**（`music_report.png`）
+
+| 面板      | 看什么                                |
+| ------- | ---------------------------------- |
+| 波形      | 节奏、强弱、哪段安静哪段爆发                     |
+| 梅尔频谱    | 频率分布——贝斯在底下、人声在中间、镲片在上面            |
+| **色度图** | 12 个音高类别 → **调性和和弦走向**（讨论音乐最关键的一张） |
+| 段落能量    | 每秒 RMS，前奏/主歌/副歌的分界                 |
+
+**文字指标**（同时返回在 `report` 字段里）
+
+- 时长、BPM、主调
+- 频段能量占比（低/中低/中高/高/超高频）
+- 动态范围（dB）
+- 最响的 5 个时刻、最安静的 3 个时刻
+
+---
+
+## 它做不到什么
+
+**图能告诉你「音乐长什么样」，不能告诉你「好不好听」。**
+
+- ✅ 「A 小调、87 BPM、副歌在 1:12 进来、贝斯偏重」
+- ❌ 「这段旋律很动人」
+
+**形态可以测量，感受得靠听的人说给模型听。**
+
+---
+
+## 安装
+
+### 1. 装 Python 依赖
+
+```bash
+python -m pip install -i https://mirrors.aliyun.com/pypi/simple/ librosa soundfile matplotlib
+```
+
+国内建议用阿里云镜像，PyPI 官方源下 `scipy`/`numba` 这种大包会非常慢。
+
+### 2. 装 ffmpeg（三选一）
+
+- 系统里已有 `ffmpeg` 在 PATH 上 → 什么都不用做
+- 设环境变量 `FFMPEG_BIN` 指向 `ffmpeg.exe`
+- `pip install imageio-ffmpeg`（会自动带一份）
+
+### 3. 装插件
+
+在 DeepSeek Harness 里：
+
+```
+plugin_manager install_bundle  <这个目录的绝对路径>
+```
+
+或者放到 profile 的 bundles 里。
+
+---
+
+## 用法
+
+模型侧直接调用：
+
+```
+music_analyze(path="D:\\Music\\song.mp3")
+music_analyze(path="...", start=60, end=120)   # 只分析 1:00–2:00
+music_analyze(path="...", label="くじら")       # 图标题带名字
+```
+
+想换输出目录：`outDir="..."`。
+
+**模型拿到结果后应该用 `read_image` 打开返回的 `imagePath` 自己看一遍**，再结合 `report` 讨论——只看数字不看图，等于没看懂。
+
+---
+
+## 配置（可选）
+
+插件 Config：
+
+```yaml
+pythonPath: 'C:\\path\\to\\venv\\Scripts\\python.exe'   # 指定解释器
+timeoutMs: 600000                                       # 分析超时
+```
+
+不配也行：插件会依次尝试 `python` / `python3` / `py`，并对每个跑一次 `import librosa` 做体检。
+
+---
+
+## 踩过的坑（这一段比代码有用）
+
+**1. 无鼓的独奏曲，BPM 会翻倍或检测不到**
+
+librosa 的节拍检测依赖打击点。纯钢琴/指弹独奏里，它会把八分音符当成拍点——一首抒情的曲子会被算成 123 BPM，实际大概 61。**工具会标 `bpmReliable: false`，别硬信这个数。**
+
+**2. 主调（key）对特殊调弦不准**
+
+指弹常用降 D、开放 C# 之类。色度分析能看出「调性中心在 C/C# 附近」，但分不清是大调小调、还是调弦造成的偏移。**看色度图比看那个字母靠谱。**
+
+**3. 频谱图比波形图信息量大得多**
+
+波形只能看出「响不响」，频谱能看出「什么东西在响」。看一首歌的编曲，直接看频谱。
+
+**4. matplotlib 的中文字体**
+
+默认字体不含中文，图标题会变成方块。脚本里已按 `Microsoft YaHei → SimHei → PingFang SC → Noto Sans CJK` 依次尝试；你的系统一个都没有的话，标题会是英文/方块——**不影响数据**。
+
+**5. `MPLCONFIGDIR` 权限**
+
+matplotlib 默认往 `~/.matplotlib` 写字体缓存，某些受限环境会报 `Permission denied`。脚本已经把它指到插件目录下的 `_mplcache/`。
+
+**6. 抽取音频统一转 22050Hz 单声道**
+
+不为音质，为了和 librosa 的分析参数对齐。要做高精度音高分析可以自己改采样率。
+
+**7. 音乐/唱歌视频做语音转写要关 VAD**
+
+如果你顺手拿它分析 MV，注意：faster-whisper 的 VAD 会把「演唱」当成「音乐」滤掉，转写出来 0 段。加 `--no-vad`。
+
+---
+
+## 许可
+
+MIT。随便改、随便用。

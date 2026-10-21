@@ -1,0 +1,40 @@
+{
+  "name": "dsh-music-analyze",
+  "version": "0.1.0",
+  "description": "DeepSeek Harness 插件：让模型「看见」音乐。把一个音频/视频文件拆成波形图、频谱图、色度图、段落能量曲线四联图，外加 BPM、主调、频段能量占比、响度峰值位置等文字指标，模型看图和数字就能和你讨论音乐。",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "music",
+    "audio",
+    "spectrogram",
+    "chroma",
+    "librosa"
+  ],
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "python/music_analyze.py",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

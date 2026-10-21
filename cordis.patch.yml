@@ -1,0 +1,4 @@
+- insert:
+    - id: music-analyze
+      name: 'dsh-music-analyze'
+      config: {}
