@@ -153,7 +153,9 @@ function createTool(config) {
       '外加 BPM、主调、频段能量占比、最响和最安静的时刻。' +
       '**注意**：这些是「音乐的形态」，不是「好不好听」——能不能打动人是听者的判断，图只能告诉你它长什么样。不要把形态描述当成感受。' +
       '分析完请用 read_image 打开返回的 imagePath 自己看一遍，再结合 report 和用户讨论。' +
-      '无鼓的独奏曲 BPM 可能翻倍或检测不到，遇到异常值要说明。' +
+      '**BPM 用三个独立估计器交叉验证**（动态规划节拍跟踪 / onset 自相关 / 循环节拍图），' +
+      '再用「奇偶拍强度比」裁决是否把八分音符误当成拍点；bpmDetail 里有三个原始值、候选和判定来源，' +
+      '速度有歧义时把这些一起告诉用户，不要把 bpm 当唯一事实。' +
       '支持 mp3/wav/flac/m4a/mp4 等（内部用 ffmpeg 统一转 22050Hz 单声道）。',
     parameters: {
       type: 'object',
@@ -180,6 +182,7 @@ function createTool(config) {
           bpm: { type: 'number' },
           bpmReliable: { type: 'boolean' },
           bpmNote: { type: 'string' },
+          bpmDetail: { type: 'object', description: '三估计器原始值、奇偶强度比、候选 BPM、判定来源' },
           key: { type: 'string' },
           bands: { type: 'object' },
           loudest: { type: 'array' },
