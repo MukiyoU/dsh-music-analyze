@@ -1,0 +1,12 @@
+{
+  "meta": {
+    "title": "Music Analyze",
+    "description": "Turn an audio or video file into four pictures — waveform, mel spectrogram, chroma, and section energy — plus BPM, key, band energy and loudness peaks, so the model can actually discuss the music with you."
+  },
+  "tool": {
+    "music_analyze": {
+      "name": "Analyze music",
+      "description": "Render an audio/video file as waveform + spectrogram + chroma + energy charts, and report BPM, key, band energy ratios and loudest/quietest moments."
+    }
+  }
+}
